@@ -1,0 +1,12 @@
+{
+  "name": "liloubooks-course-backend",
+  "version": "1.0.0",
+  "description": "Backend for LilouBooks online course",
+  "main": "api/webhook.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
