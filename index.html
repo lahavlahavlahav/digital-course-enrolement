@@ -1,0 +1,511 @@
+import React, { useState, useEffect } from 'react';
+import { Lock, BookOpen, Clock, CheckCircle, Play, FileText, Video } from 'lucide-react';
+
+const OnlineCoursePlatform = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [currentModule, setCurrentModule] = useState(null);
+  const [completedLessons, setCompletedLessons] = useState([]);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+
+  // Course structure
+  const courseModules = [
+    {
+      id: 1,
+      title: "Getting Started: Books & Tools",
+      lessons: [
+        { id: 'intro-1', title: 'Welcome to Book Folding', type: 'video', duration: '10 min', description: 'Introduction to the art of book folding and what you\'ll learn in this course' },
+        { id: 'intro-2', title: 'How to Choose the Perfect Book', type: 'video', duration: '15 min', description: 'Book thickness, page count, paper quality, hardcover vs paperback considerations' },
+        { id: 'intro-3', title: 'Essential Tools You\'ll Need', type: 'video', duration: '12 min', description: 'Rulers, bone folders, cutting tools, pencils, and optional equipment' },
+        { id: 'intro-4', title: 'Setting Up Your Workspace', type: 'text', duration: '8 min', description: 'Creating an organized, comfortable workspace for book folding projects' },
+        { id: 'intro-5', title: 'Book Anatomy & Terminology', type: 'video', duration: '10 min', description: 'Understanding spine, pages, margins, and book folding vocabulary' }
+      ]
+    },
+    {
+      id: 2,
+      title: "Reading & Understanding Patterns",
+      lessons: [
+        { id: 'pattern-1', title: 'What is a Book Folding Pattern?', type: 'video', duration: '12 min', description: 'Understanding pattern types and how they work' },
+        { id: 'pattern-2', title: 'Reading MMF Patterns', type: 'video', duration: '18 min', description: 'How to interpret measurements and markings for folding patterns' },
+        { id: 'pattern-3', title: 'Reading Cut & Fold Patterns', type: 'video', duration: '16 min', description: 'Understanding cut lines, fold lines, and pattern symbols' },
+        { id: 'pattern-4', title: 'Pattern Scaling & Book Matching', type: 'video', duration: '14 min', description: 'Adapting patterns to different book sizes and page counts' },
+        { id: 'pattern-5', title: 'Common Pattern Mistakes to Avoid', type: 'text', duration: '10 min', description: 'Troubleshooting pattern reading errors before you start' }
+      ]
+    },
+    {
+      id: 3,
+      title: "MMF (Measure, Mark, Fold) Technique",
+      lessons: [
+        { id: 'mmf-1', title: 'MMF Technique Explained', type: 'video', duration: '15 min', description: 'What is MMF and when to use it' },
+        { id: 'mmf-2', title: 'How to Measure Pages', type: 'video', duration: '18 min', description: 'Accurate measuring techniques from top of page, using rulers effectively' },
+        { id: 'mmf-3', title: 'Marking Your Pages', type: 'video', duration: '16 min', description: 'Where and how to mark fold points clearly and accurately' },
+        { id: 'mmf-4', title: 'The Perfect Fold', type: 'video', duration: '20 min', description: 'Folding techniques for crisp, even folds using bone folders' },
+        { id: 'mmf-5', title: 'Working from a Pattern', type: 'video', duration: '22 min', description: 'Step-by-step: reading measurements and executing MMF patterns' },
+        { id: 'mmf-6', title: 'Precision & Troubleshooting', type: 'text', duration: '12 min', description: 'Common MMF mistakes and how to fix them' },
+        { id: 'mmf-7', title: 'Practice Project: Simple Heart', type: 'video', duration: '35 min', description: 'Complete beginner MMF project from start to finish' }
+      ]
+    },
+    {
+      id: 4,
+      title: "Cut & Fold Technique",
+      lessons: [
+        { id: 'cf-1', title: 'Cut & Fold Technique Explained', type: 'video', duration: '14 min', description: 'What is Cut & Fold and when to use it for dramatic effects' },
+        { id: 'cf-2', title: 'Choosing Cutting Tools', type: 'video', duration: '12 min', description: 'Craft knives, scissors, cutting mats, and safety equipment' },
+        { id: 'cf-3', title: 'Safe Cutting Techniques', type: 'video', duration: '18 min', description: 'Proper grip, blade angle, and cutting through multiple pages safely' },
+        { id: 'cf-4', title: 'Pattern Transfer Methods', type: 'video', duration: '16 min', description: 'Tracing, templates, and marking techniques for cut patterns' },
+        { id: 'cf-5', title: 'Cutting Clean Lines', type: 'video', duration: '20 min', description: 'Techniques for precise cuts without tearing or ragged edges' },
+        { id: 'cf-6', title: 'Folding After Cutting', type: 'video', duration: '15 min', description: 'How cutting affects folding and achieving 3D effects' },
+        { id: 'cf-7', title: 'Practice Project: 3D Letter', type: 'video', duration: '40 min', description: 'Complete Cut & Fold project with detailed guidance' }
+      ]
+    },
+    {
+      id: 5,
+      title: "Combined Techniques",
+      lessons: [
+        { id: 'comb-1', title: 'Why Combine Techniques?', type: 'video', duration: '14 min', description: 'Understanding when mixing methods creates better results' },
+        { id: 'comb-2', title: 'Planning Combined Projects', type: 'video', duration: '18 min', description: 'Design approach: which technique for which part of your design' },
+        { id: 'comb-3', title: 'Reading Combined Patterns', type: 'text', duration: '12 min', description: 'How to interpret patterns that use both MMF and Cut & Fold' },
+        { id: 'comb-4', title: 'Order of Operations', type: 'video', duration: '16 min', description: 'Should you cut first or fold first? Decision-making process' },
+        { id: 'comb-5', title: 'Advanced Combined Project', type: 'video', duration: '45 min', description: 'Complete project using both techniques strategically' }
+      ]
+    },
+    {
+      id: 6,
+      title: "MMF Multiline Technique",
+      lessons: [
+        { id: 'mmf-ml-1', title: 'What is Multiline MMF?', type: 'video', duration: '16 min', description: 'Creating multiple folds per page for complex designs' },
+        { id: 'mmf-ml-2', title: 'Reading Multiline Patterns', type: 'video', duration: '20 min', description: 'Understanding pattern notation for multiple fold points' },
+        { id: 'mmf-ml-3', title: 'Measuring Multiple Points', type: 'video', duration: '18 min', description: 'Techniques for marking several measurements per page accurately' },
+        { id: 'mmf-ml-4', title: 'Sequential Folding', type: 'video', duration: '22 min', description: 'The correct order for making multiple folds on one page' },
+        { id: 'mmf-ml-5', title: 'Creating Depth & Dimension', type: 'video', duration: '20 min', description: 'How multiline creates dramatic 3D effects' },
+        { id: 'mmf-ml-6', title: 'Advanced Multiline Project', type: 'video', duration: '50 min', description: 'Intricate design with multiple fold points per page' }
+      ]
+    },
+    {
+      id: 7,
+      title: "Cut & Fold Multilayers Technique",
+      lessons: [
+        { id: 'cf-ml-1', title: 'What are Multilayers?', type: 'video', duration: '15 min', description: 'Creating depth through layered cuts and folds' },
+        { id: 'cf-ml-2', title: 'Reading Multilayer Patterns', type: 'video', duration: '18 min', description: 'Understanding layer notation and depth indicators in patterns' },
+        { id: 'cf-ml-3', title: 'Cutting for Depth', type: 'video', duration: '22 min', description: 'Variable depth cutting techniques for dimensional effects' },
+        { id: 'cf-ml-4', title: 'Layer Management', type: 'video', duration: '20 min', description: 'Keeping track of different layers as you work' },
+        { id: 'cf-ml-5', title: 'Creating Shadow & Dimension', type: 'video', duration: '24 min', description: 'Using layers to create visual depth and shadow effects' },
+        { id: 'cf-ml-6', title: 'Advanced Multilayer Project', type: 'video', duration: '55 min', description: 'Complex project with multiple cutting depths' }
+      ]
+    },
+    {
+      id: 8,
+      title: "Finishing & Presentation",
+      lessons: [
+        { id: 'finish-1', title: 'Securing Your Finished Book', type: 'video', duration: '14 min', description: 'Gluing pages, reinforcing structure, ensuring longevity' },
+        { id: 'finish-2', title: 'Decorating & Embellishing', type: 'video', duration: '18 min', description: 'Adding paint, glitter, decorative elements safely' },
+        { id: 'finish-3', title: 'Display Options', type: 'text', duration: '10 min', description: 'Stands, frames, and presentation ideas for finished pieces' },
+        { id: 'finish-4', title: 'Photographing Your Work', type: 'video', duration: '16 min', description: 'Lighting and angles for stunning photos of your book art' }
+      ]
+    },
+    {
+      id: 9,
+      title: "Troubleshooting & Tips",
+      lessons: [
+        { id: 'trouble-1', title: 'Common Mistakes & How to Fix Them', type: 'video', duration: '20 min', description: 'Addressing the most frequent errors in book folding' },
+        { id: 'trouble-2', title: 'When Things Go Wrong', type: 'text', duration: '12 min', description: 'Salvaging projects and learning from mistakes' },
+        { id: 'trouble-3', title: 'Pattern Doesn\'t Fit Your Book', type: 'video', duration: '16 min', description: 'Adjusting and adapting patterns on the fly' },
+        { id: 'trouble-4', title: 'Efficiency Tips for Faster Folding', type: 'video', duration: '14 min', description: 'Workflow optimization and time-saving techniques' }
+      ]
+    },
+    {
+      id: 10,
+      title: "Creating Your Own Patterns",
+      lessons: [
+        { id: 'create-1', title: 'Pattern Design Basics', type: 'video', duration: '18 min', description: 'Understanding how patterns are created' },
+        { id: 'create-2', title: 'From Image to Pattern', type: 'video', duration: '22 min', description: 'Converting your own designs into workable patterns' },
+        { id: 'create-3', title: 'Software & Tools for Pattern Making', type: 'text', duration: '15 min', description: 'Free and paid tools for creating book folding patterns' },
+        { id: 'create-4', title: 'Testing Your Patterns', type: 'video', duration: '16 min', description: 'How to prototype and refine your own designs' }
+      ]
+    },
+    {
+      id: 11,
+      title: "Business & Teaching",
+      lessons: [
+        { id: 'biz-1', title: 'Turning Your Passion into Income', type: 'video', duration: '16 min', description: 'Different ways to monetize book folding' },
+        { id: 'biz-2', title: 'Pricing Your Artwork', type: 'text', duration: '12 min', description: 'How to calculate costs and set profitable prices' },
+        { id: 'biz-3', title: 'Selling Online & In-Person', type: 'video', duration: '18 min', description: 'Etsy, craft fairs, commissions, and more' },
+        { id: 'biz-4', title: 'Hosting Your Own Workshops', type: 'video', duration: '20 min', description: 'Planning, pricing, and running successful book folding classes' },
+        { id: 'biz-5', title: 'Building Your Online Presence', type: 'video', duration: '16 min', description: 'Social media strategies for book folding artists' },
+        { id: 'biz-6', title: 'Copyright & Pattern Licensing', type: 'text', duration: '14 min', description: 'Understanding legal aspects of selling book art and patterns' }
+      ]
+    },
+    {
+      id: 12,
+      title: "Bonus: Advanced Techniques",
+      lessons: [
+        { id: 'bonus-1', title: 'Working with Colored Pages', type: 'video', duration: '14 min', description: 'Techniques for books with colored or printed pages' },
+        { id: 'bonus-2', title: 'Inverted/Negative Space Designs', type: 'video', duration: '18 min', description: 'Creating designs using the negative space' },
+        { id: 'bonus-3', title: 'Combining Multiple Books', type: 'video', duration: '16 min', description: 'Large-scale projects using several books together' },
+        { id: 'bonus-4', title: 'Book Folding for Special Occasions', type: 'text', duration: '10 min', description: 'Weddings, anniversaries, memorials, and custom commissions' },
+        { id: 'bonus-5', title: 'Where to Go from Here', type: 'video', duration: '12 min', description: 'Continuing your book folding journey and community resources' }
+      ]
+    }
+  ];
+
+  // Simulate checking access expiration
+  useEffect(() => {
+    if (user) {
+      const accessEnd = new Date(user.accessExpires);
+      const now = new Date();
+      if (now > accessEnd) {
+        setError('Your course access has expired. Please contact support to renew.');
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    }
+  }, [user]);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setError('');
+    
+    // Demo credentials - in production this would verify against your backend
+    if (loginForm.username === 'demo' && loginForm.password === 'bookfold123') {
+      const accessExpires = new Date();
+      accessExpires.setDate(accessExpires.getDate() + 12);
+      
+      setUser({
+        username: loginForm.username,
+        accessExpires: accessExpires.toISOString(),
+        enrolled: new Date().toISOString()
+      });
+      setIsAuthenticated(true);
+    } else {
+      setError('Invalid username or password');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+    setCurrentModule(null);
+    setLoginForm({ username: '', password: '' });
+  };
+
+  const markLessonComplete = (lessonId) => {
+    if (!completedLessons.includes(lessonId)) {
+      setCompletedLessons([...completedLessons, lessonId]);
+    }
+  };
+
+  const calculateProgress = () => {
+    const totalLessons = courseModules.reduce((acc, mod) => acc + mod.lessons.length, 0);
+    return Math.round((completedLessons.length / totalLessons) * 100);
+  };
+
+  const getDaysRemaining = () => {
+    if (!user) return 0;
+    const now = new Date();
+    const end = new Date(user.accessExpires);
+    const diff = end - now;
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  // Payment Page
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center mb-4">
+              <BookOpen className="w-12 h-12 text-amber-700 mr-3" />
+              <h1 className="text-4xl font-bold text-gray-800">LilouBooks</h1>
+            </div>
+            <p className="text-xl text-gray-600">Master the Art of Book Folding</p>
+          </div>
+
+          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+            {/* Course Info */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Complete Book Folding Course</h2>
+              <p className="text-gray-600 mb-6">Learn all professional book folding techniques from a master artist and teacher.</p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start">
+                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-800">12 Comprehensive Modules</p>
+                    <p className="text-sm text-gray-600">From absolute basics to advanced techniques and business</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-800">60+ Detailed Lessons</p>
+                    <p className="text-sm text-gray-600">Video tutorials, written guides, and step-by-step projects</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-800">Learn to Read Any Pattern</p>
+                    <p className="text-sm text-gray-600">Master pattern interpretation from scratch</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-800">All Techniques Covered</p>
+                    <p className="text-sm text-gray-600">MMF, Cut & Fold, Combined, Multiline, Multilayers</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <CheckCircle className="w-6 h-6 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-gray-800">12-Day Full Access</p>
+                    <p className="text-sm text-gray-600">Learn at your own pace with nearly 2 weeks of access</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 rounded-xl p-6 mb-6">
+                <p className="text-3xl font-bold text-amber-900 mb-2">$69</p>
+                <p className="text-gray-600">One-time payment for 12-day access</p>
+              </div>
+
+              <button className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-4 rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg">
+                Enroll Now with Stripe
+              </button>
+              <p className="text-xs text-gray-500 text-center mt-3">Secure payment processing via Stripe</p>
+            </div>
+
+            {/* Login Form */}
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="flex items-center mb-6">
+                <Lock className="w-8 h-8 text-amber-600 mr-3" />
+                <h2 className="text-2xl font-bold text-gray-800">Already Enrolled?</h2>
+              </div>
+              
+              <p className="text-gray-600 mb-6">Login with your credentials to access the course.</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                  <input
+                    type="text"
+                    value={loginForm.username}
+                    onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                    onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                    onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-gray-900 transition-colors"
+                >
+                  Login to Course
+                </button>
+              </div>
+
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm font-semibold text-blue-900 mb-2">Demo Access:</p>
+                <p className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-2 py-1 rounded">demo</code></p>
+                <p className="text-sm text-blue-700">Password: <code className="bg-blue-100 px-2 py-1 rounded">bookfold123</code></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Course Dashboard
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <BookOpen className="w-8 h-8 mr-3" />
+              <div>
+                <h1 className="text-2xl font-bold">LilouBooks Course</h1>
+                <p className="text-sm text-amber-100">Welcome back, {user.username}!</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="text-right">
+                <div className="flex items-center text-amber-100">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="text-sm font-semibold">{getDaysRemaining()} days remaining</span>
+                </div>
+                <p className="text-xs text-amber-100">Access until {new Date(user.accessExpires).toLocaleDateString()}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-white text-amber-700 px-4 py-2 rounded-lg font-semibold hover:bg-amber-50 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-700">Course Progress</span>
+            <span className="text-sm font-bold text-amber-600">{calculateProgress()}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-gradient-to-r from-amber-500 to-orange-500 h-3 rounded-full transition-all duration-500"
+              style={{ width: `${calculateProgress()}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Modules Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Course Modules</h2>
+              <div className="space-y-2">
+                {courseModules.map((module) => {
+                  const moduleCompleted = module.lessons.every(l => completedLessons.includes(l.id));
+                  return (
+                    <button
+                      key={module.id}
+                      onClick={() => setCurrentModule(module)}
+                      className={`w-full text-left p-4 rounded-lg transition-all ${
+                        currentModule?.id === module.id
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
+                          : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className="font-semibold text-sm">Module {module.id}</span>
+                            {moduleCompleted && (
+                              <CheckCircle className="w-4 h-4 ml-2 text-green-400" />
+                            )}
+                          </div>
+                          <p className="text-sm mt-1">{module.title}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {!currentModule ? (
+              <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+                <BookOpen className="w-20 h-20 text-amber-500 mx-auto mb-6" />
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Your Course!</h2>
+                <p className="text-gray-600 mb-6">Select a module from the left to begin your book folding journey.</p>
+                <button
+                  onClick={() => setCurrentModule(courseModules[0])}
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition-all"
+                >
+                  Start with Module 1
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                    Module {currentModule.id}: {currentModule.title}
+                  </h2>
+                  <p className="text-gray-600">{currentModule.lessons.length} lessons</p>
+                </div>
+
+                {currentModule.lessons.map((lesson) => {
+                  const isCompleted = completedLessons.includes(lesson.id);
+                  return (
+                    <div key={lesson.id} className="bg-white rounded-xl shadow-lg p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start flex-1">
+                          {lesson.type === 'video' ? (
+                            <Video className="w-6 h-6 text-amber-600 mr-3 mt-1 flex-shrink-0" />
+                          ) : (
+                            <FileText className="w-6 h-6 text-amber-600 mr-3 mt-1 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-gray-800 mb-1">{lesson.title}</h3>
+                            <p className="text-sm text-gray-500">{lesson.duration}</p>
+                          </div>
+                        </div>
+                        {isCompleted && (
+                          <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                        )}
+                      </div>
+
+                      {lesson.type === 'video' ? (
+                        <div className="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-4">
+                          <div className="text-center">
+                            <Play className="w-16 h-16 text-white opacity-75 mx-auto mb-3" />
+                            <p className="text-white text-sm opacity-75">Video player placeholder</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-lg p-6 mb-4">
+                          <p className="text-gray-700 mb-3">{lesson.description}</p>
+                          <p className="text-gray-600 text-sm italic">Detailed written content, diagrams, and reference materials would appear here with step-by-step guidance, visual examples, and downloadable resources.</p>
+                        </div>
+                      )}
+
+                      {lesson.description && (
+                        <div className="bg-amber-50 rounded-lg p-4 mb-4">
+                          <p className="text-sm text-gray-700"><strong>What you'll learn:</strong> {lesson.description}</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => markLessonComplete(lesson.id)}
+                        disabled={isCompleted}
+                        className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                          isCompleted
+                            ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700'
+                        }`}
+                      >
+                        {isCompleted ? 'Completed ✓' : 'Mark as Complete'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OnlineCoursePlatform;
