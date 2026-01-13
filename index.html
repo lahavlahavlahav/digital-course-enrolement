@@ -9,6 +9,13 @@ const OnlineCoursePlatform = () => {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
+  // Enforce HTTPS redirect
+  useEffect(() => {
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+      window.location.href = window.location.href.replace('http:', 'https:');
+    }
+  }, []);
+
   // Course structure
   const courseModules = [
     {
